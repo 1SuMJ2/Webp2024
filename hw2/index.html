@@ -1,0 +1,135 @@
+<html>
+    <!--CSS-->
+    <head>
+        <style> 
+          table { 
+        font-family: Arial, Helvetica, sans-serif; 
+        border-collapse: collapse; 
+        width: 100%; 
+    }
+    td, th { 
+        border: 1px solid #ddd; 
+        padding: 6px; 
+        width: 33%;
+    } 
+    tr:nth-child(even){background-color: #f2f2f2;} 
+    tr:hover {background-color: #ddd;} 
+    th { 
+        padding-top: 12px; 
+        padding-bottom: 12px; 
+        text-align: left; 
+        background-color: #04AA6D; 
+        color: white; 
+    } 
+        </style>
+    </head>
+      
+<body>
+<h1>景點觀光導覽資訊</h1>
+<input type="text" id="searchInput" onkeyup="searchName()" placeholder="搜尋名稱">
+<table id="csie" class="table table-striped table-hover">
+    <tr>
+        <th>名稱</th>
+        <th>地點</th>
+        <th>票價</th>
+    </tr>
+</table>
+<button onclick="prevPage()">上一頁</button>
+<span id="pageInfo"></span>
+<button onclick="nextPage()">下一頁</button>
+<script>
+    var currentDataset = []; 
+    var currentPage = 1; 
+    var recordsPerPage = 10; 
+    var totalRecords = 0; 
+    var totalPage = 0; 
+    
+    //「上一頁」功能的function
+    function prevPage(){
+        if (currentPage > 1) {
+            currentPage--;
+            changePage(currentPage);
+        }
+    }
+    
+    //「下一頁」功能的function
+    function nextPage(){
+        if (currentPage < totalPage) {
+            currentPage++;
+            changePage(currentPage);
+        }
+    }
+    
+    //切換頁面內容的function
+    function changePage(page){
+        var table = document.getElementById("csie");
+        var pageInfo = document.getElementById("pageInfo");
+
+        if (page < 1) page = 1;
+        if (page > totalPage) page = totalPage;
+
+        table.innerHTML = "<tr><th>名稱</th><th>地點</th><th>票價</th></tr>";
+
+        var start = (page - 1) * recordsPerPage;
+        var end = start + recordsPerPage;
+        var paginatedItems = currentDataset.slice(start, end);
+
+        paginatedItems.forEach(function(item) {
+        var row = table.insertRow();
+        row.insertCell(0).innerHTML = item['title'];
+        row.insertCell(1).innerHTML = item['showInfo'][0]['location'];
+        row.insertCell(2).innerHTML = item['showInfo'][0]['price'];
+        });
+
+        pageInfo.innerHTML = page + "/"+totalPage ;
+    }
+    
+    //搜尋表格內容的function
+    function searchName(){
+        var input, filter, table, tr, td, i, txtValue;
+        input = document.getElementById("searchInput");
+        filter = input.value.toUpperCase();
+        table = document.getElementById("csie");
+        tr = table.getElementsByTagName("tr");
+        currentDataset = dataset.filter(data => data.title.toUpperCase().includes(filter)); // 根據搜尋條件過濾資料
+        totalRecords = currentDataset.length;
+        totalPage = Math.ceil(totalRecords / recordsPerPage);//前面已定義過recordsPerPage為10
+        changePage(1); // 重置到第一頁
+    }
+    
+    //清除表格內容的function
+    function delOldData(){
+        document.getElementById("csie").innerHTML = "<tr><th>名稱</th><th>地點</th><th>票價</th></tr>";
+    }
+    
+    function addNewData(dataset, clearOldData=true){
+        if(clearOldData){
+            delOldData();
+        }
+        var myTable=document.getElementById("csie");
+        dataset.forEach(function(data,index){
+            var row=myTable.insertRow(-1);
+            row.insertCell(0).innerHTML=data['title'];
+            row.insertCell(1).innerHTML=data['showInfo'][0]['location'];
+            row.insertCell(2).innerHTML=data['showInfo'][0]['price'];
+        });
+    }
+    
+    window.onload = function() {
+    var openUrl = "https://cloud.culture.tw/frontsite/trans/SearchShowAction.do?method=doFindTypeJ&category=6";
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', openUrl, true);
+    xhr.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            dataset = JSON.parse(this.responseText);
+            currentDataset = dataset.slice(); 
+            totalRecords = dataset.length;
+            totalPage = Math.ceil(totalRecords/recordsPerPage);
+            changePage(currentPage);
+        }
+    };
+    xhr.send();
+    };
+    </script>
+</body>
+</html>
